@@ -9,11 +9,13 @@ import (
 )
 
 type Room struct {
-	Name       string
-	register   chan *websocket.Conn
-	unregister chan *websocket.Conn
+	Name string
+	//register   chan *websocket.Conn
+	//unregister chan *websocket.Conn
+	register   chan *client.Client
+	unregister chan *client.Client
 	broadcast  chan string
-	clients    map[*websocket.Conn]client.Client
+	clients    map[*websocket.Conn]*client.Client
 }
 
 var Rooms map[string]*Room
@@ -27,11 +29,13 @@ func RoomSetup() {
 		newUUID := uuid.NewString()
 		log.Printf("%s", name)
 		Rooms[newUUID] = &Room{
-			Name:       name,
-			register:   make(chan *websocket.Conn),
-			unregister: make(chan *websocket.Conn),
+			Name: name,
+			//register:   make(chan *websocket.Conn),
+			//unregister: make(chan *websocket.Conn),
+			register:   make(chan *client.Client),
+			unregister: make(chan *client.Client),
 			broadcast:  make(chan string),
-			clients:    make(map[*websocket.Conn]client.Client),
+			clients:    make(map[*websocket.Conn]*client.Client),
 		}
 	}
 
@@ -45,7 +49,7 @@ func (r *Room) runRoom() {
 	for {
 		select {
 		case connection := <-r.register:
-			r.clients[connection] = client.Client{}
+			r.clients[connection.Connection] = connection
 			log.Println("connection registered")
 
 		case message := <-r.broadcast:
@@ -64,18 +68,18 @@ func (r *Room) runRoom() {
 
 		case connection := <-r.unregister:
 			// Remove the client from the hub
-			delete(r.clients, connection)
+			delete(r.clients, connection.Connection)
 
 			log.Println("connection unregistered")
 		}
 	}
 }
 
-func (r *Room) Unregister(c *websocket.Conn) {
+func (r *Room) Unregister(c *client.Client) {
 	r.unregister <- c
 }
 
-func (r *Room) Register(c *websocket.Conn) {
+func (r *Room) Register(c *client.Client) {
 	r.register <- c
 }
 
