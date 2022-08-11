@@ -6,11 +6,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	_ "github.com/jonreesman/chat/config"
+	"github.com/jonreesman/chat/database"
 	"github.com/jonreesman/chat/room"
 	"github.com/jonreesman/chat/router"
 )
 
 func main() {
+	database.Connect()
 	app := fiber.New()
 
 	room.RoomSetup()
