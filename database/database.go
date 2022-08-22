@@ -25,5 +25,74 @@ func Connect() {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to databse: %v", err))
 	}
-	DB.AutoMigrate(&model.Client{})
+	DB.AutoMigrate(&model.Client{}, &model.Message{}, &model.Room{})
+}
+
+func CreateClient(client *model.Client) error {
+	if err := DB.Create(&client).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func FindClient(id string) model.Client {
+	var client model.Client
+	DB.First(&client, id)
+	return client
+}
+
+func SaveClient(client *model.Client) {
+	DB.Save(&client)
+}
+
+func DeleteClient(client *model.Client) {
+	DB.Delete(&client)
+}
+
+func FindMessage(id string) model.Message {
+	var message model.Message
+	DB.First(&message, id)
+	return message
+}
+
+func SaveMessage(message *model.Message) {
+	DB.Save(&message)
+}
+
+func GetRoomMessages(id string) []model.Message {
+	var messages []model.Message
+	DB.Find(&messages, "room_id = ?", id)
+	return messages
+}
+
+func DeleteMessage(message *model.Message) {
+	DB.Delete(&message)
+}
+
+func CreateRoom(room *model.Room) error {
+	if err := DB.Create(&room).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetRooms() []model.Room {
+	var rooms []model.Room
+	DB.Find(&rooms)
+	return rooms
+}
+
+func FindRoom(id string) model.Room {
+	var room model.Room
+	DB.First(&room, "id = ?", id)
+	return room
+}
+
+func SaveRoom(room *model.Room) {
+	DB.Save(&room)
+}
+
+func DeleteRoom(room *model.Room) {
+	DB.Unscoped().Where(&model.Message{RoomID: room.ID}).Delete(&model.Message{})
+	DB.Delete(&room)
 }

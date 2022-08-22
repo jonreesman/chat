@@ -6,9 +6,12 @@ import (
 )
 
 type Client struct {
-	Username   string
-	ID         uuid.UUID
-	connection *websocket.Conn
+	Username    string
+	DisplayName string
+	Password    string
+	ID          uuid.UUID
+	connection  *websocket.Conn
+	AvatarURL   string
 } // Add more data to this type if needed
 
 func CreateClient(username string, ID uuid.UUID, connection *websocket.Conn) *Client {
@@ -17,6 +20,10 @@ func CreateClient(username string, ID uuid.UUID, connection *websocket.Conn) *Cl
 		ID:         ID,
 		connection: connection,
 	}
+}
+
+func (c *Client) SetConnection(connection *websocket.Conn) {
+	c.connection = connection
 }
 
 func (c Client) GetConnection() *websocket.Conn {
