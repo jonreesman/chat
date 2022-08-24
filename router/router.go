@@ -45,4 +45,7 @@ func SetupRoutes(app *fiber.App) {
 	client.Patch("/:id", middleware.Protected(), handler.UpdateClient)
 	client.Delete("/:id", middleware.Protected(), handler.DeleteClient)
 
+	uploads := app.Group("/uploads")
+	uploads.Post("/avatar", middleware.Protected(), handler.UploadAvatar)
+
 }
