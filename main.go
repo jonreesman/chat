@@ -19,6 +19,7 @@ func main() {
 	room.RoomSetup()
 
 	app.Static("/", "./home.html")
+	app.Static("/avatars", "./uploads/avatars")
 
 	app.Use(cors.New())
 
