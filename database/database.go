@@ -49,6 +49,11 @@ func DeleteClient(client *model.Client) {
 	DB.Delete(&client)
 }
 
+func UpdateAvatar(client *model.Client) {
+	fmt.Println("Updating avatar: " + client.AvatarURL)
+	DB.Model(&model.Client{}).Where("id = ?", client.ID).Update("avatar_url", client.AvatarURL)
+}
+
 func FindMessage(id string) model.Message {
 	var message model.Message
 	DB.First(&message, id)
