@@ -87,6 +87,8 @@ func ConnectToRoom(c *websocket.Conn) {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Println("read error:", err)
+			} else {
+				log.Println(err)
 			}
 
 			return // Calls the deferred function, i.e. closes the connection on error
