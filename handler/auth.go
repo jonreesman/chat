@@ -1,46 +1,40 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
 	"github.com/jonreesman/chat/config"
-	"github.com/jonreesman/chat/database"
-	"github.com/jonreesman/chat/model"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
-
-func getClientByUsername(name string) (*model.Client, error) {
-	fmt.Println(name)
-	db := database.DB
-	var client model.Client
-	if err := db.Where(&model.Client{Username: name}).Find(&client).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &client, nil
-}
 
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
+// Recieves login info from the body of the HTTP request.
+// Creates a new JSON Web Token, with a 72 hour expiry and
+// returns it to the client.
+/*
+	POST Request Form: http://[ip]:[port]/api/auth/login
+	Request Body (JSON): {
+		"Identity": [username],
+		"Password": [user password]
+	}
+	Response Form:
+		{
+			"status": [response status],
+			"message": [success/error],
+			"token": [JWT],
+			"user": [model.Client]
+		}
+*/
+
 func Login(c *fiber.Ctx) error {
 	type LoginInput struct {
 		Identity string
-		Password string
-	}
-	type ClientData struct {
-		ID       uuid.UUID
-		Username string
 		Password string
 	}
 	var input LoginInput
