@@ -12,6 +12,23 @@ import (
 	"github.com/jonreesman/chat/room"
 )
 
+// Recieves a new room name via the post request
+// body, creates the room in the database, then adds
+// the new room to the room hub.
+/*
+	POST Request Form: http://[ip]:[port]/api/rooms
+	Request Body (JSON): {
+		"Name": [new room name]
+	}
+	Response Form:
+		{
+			"status": [response status],
+			"message": [success/error],
+			"data": {
+				"Name": [new room name],
+			}
+		}
+*/
 func CreateRoom(c *fiber.Ctx) error {
 	type NewRoom struct {
 		Name string
@@ -33,6 +50,19 @@ func CreateRoom(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "success", "message": "Created room", "data": newRoom})
 }
 
+// Recieves a new room name via the post request
+// body, creates the room in the database, then adds
+// the new room to the room hub.
+/*
+	DELETE Request Form: http://[ip]:[port]/api/rooms/:id
+	Request Body (JSON): None
+	Response Form:
+		{
+			"status": [response status],
+			"message": [success/error],
+			"data": nil
+		}
+*/
 func DeleteRoom(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -50,6 +80,22 @@ func DeleteRoom(c *fiber.Ctx) error {
 	return c.Status(500).JSON(fiber.Map{"status": "error", "message": "unable to delete room"})
 }
 
+// Recieves a new room name from the body of the request,
+// then updates the room in both the database and room hub.
+/*
+	PATCH Request Form: http://[ip]:[port]/api/rooms/:id
+	Request Body (JSON): {
+		"Name": [new room name]
+	}
+	Response Form:
+		{
+			"status": [response status],
+			"message": [success/error],
+			"data": {
+				"Name": [new room name],
+			}
+		}
+*/
 func UpdateRoom(c *fiber.Ctx) error {
 	id := c.Params("id")
 	name := c.Params("name")
@@ -70,6 +116,20 @@ func UpdateRoom(c *fiber.Ctx) error {
 
 }
 
+// Recieves a new room name via the post request
+// body, creates the room in the database, then adds
+// the new room to the room hub.
+/*
+	GET Request Form: http://[ip]:[port]/api/rooms
+	Request Body (JSON): None
+	Response Form:
+		{
+			[]{
+				"ID": [room ID],
+				"Name": [room name]
+			}
+		}
+*/
 func GetRooms(c *fiber.Ctx, rooms map[string]*room.Room) error {
 	type hubPayLoad struct {
 		ID   string

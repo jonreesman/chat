@@ -35,6 +35,7 @@ func CreateClient(client *model.Client) error {
 	return nil
 }
 
+// Deprecated. Does not work reliably.
 func FindClient(id string) model.Client {
 	var client model.Client
 	DB.First(&client, id)
