@@ -2,36 +2,17 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/gofiber/websocket/v2"
-	"github.com/golang-jwt/jwt"
-	"github.com/jonreesman/chat/config"
 	"github.com/jonreesman/chat/database"
+	"github.com/jonreesman/chat/middleware"
 	"github.com/jonreesman/chat/model"
 	"github.com/jonreesman/chat/room"
 )
-
-func parseToken(token string) (*jwt.Token, error) {
-	token = strings.ReplaceAll(token, "Bearer ", "")
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(config.GetConfig("SECRET")), nil
-	})
-	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
-		fmt.Println(claims["user_id"])
-		return parsedToken, nil
-	} else {
-		return nil, err
-	}
-}
 
 func ConnectToRoom(c *websocket.Conn) {
 	// When the function returns, unregister the client and close the connection
@@ -42,7 +23,7 @@ func ConnectToRoom(c *websocket.Conn) {
 		return
 	}
 	token := c.Query("Authorization")
-	parsedToken, err := parseToken(token)
+	parsedToken, err := middleware.ParseToken(token)
 	if err != nil {
 		log.Printf("error parsing token: %v", err)
 		return
