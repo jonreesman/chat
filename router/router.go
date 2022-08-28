@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +30,6 @@ func SetupRoutes(app *fiber.App) {
 	})
 
 	rooms.Get("/:id", websocket.New(func(c *websocket.Conn) {
-		fmt.Println(c)
 		handler.ConnectToRoom(c)
 	}))
 
@@ -40,12 +38,12 @@ func SetupRoutes(app *fiber.App) {
 	rooms.Patch("/:id", middleware.Protected(), handler.UpdateRoom)
 
 	client := api.Group("/client")
-	client.Get("/:id", middleware.Protected(), handler.GetClient)
+	client.Get("/:id", middleware.Protected(), middleware.GetToken, handler.GetClient)
 	client.Post("/", handler.CreateClient)
-	client.Patch("/:id", middleware.Protected(), handler.UpdateClient)
+	client.Patch("/:id", middleware.Protected(), middleware.GetToken, handler.UpdateClient)
 	client.Delete("/:id", middleware.Protected(), handler.DeleteClient)
 
 	uploads := app.Group("/uploads")
-	uploads.Post("/avatar", middleware.Protected(), handler.UploadAvatar)
+	uploads.Post("/avatar", middleware.Protected(), middleware.GetToken, handler.UploadAvatar)
 
 }
