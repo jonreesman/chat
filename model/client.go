@@ -12,7 +12,7 @@ type Client struct {
 	ID          uuid.UUID
 	connection  *websocket.Conn
 	AvatarURL   string
-} // Add more data to this type if needed
+}
 
 func CreateClient(username string, ID uuid.UUID, connection *websocket.Conn) *Client {
 	return &Client{
