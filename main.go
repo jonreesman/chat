@@ -21,7 +21,9 @@ func main() {
 	app.Static("/", "./home.html")
 	app.Static("/avatars", "./uploads/avatars")
 
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowCredentials: true,
+	}))
 
 	router.SetupRoutes(app)
 
