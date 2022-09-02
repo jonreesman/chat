@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jonreesman/chat/config"
 )
 
@@ -25,18 +25,21 @@ func Protected() fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey:   []byte(config.GetConfig("SECRET")),
 		ErrorHandler: jwtError,
+		TokenLookup:  "cookie:token",
 	})
 }
 
 func GetToken(c *fiber.Ctx) error {
-	token := c.GetReqHeaders()["Authorization"]
-	splitToken := strings.Split(token, " ")
-	parsedToken, err := jwt.Parse(splitToken[1], func(token *jwt.Token) (interface{}, error) {
+	token := c.Cookies("token")
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(config.GetConfig("SECRET")), nil
 	})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Invalid token id", "data": nil})
 	}
+	fmt.Println("token: " + token)
+	fmt.Println("user")
+	fmt.Println(c.Locals("user"))
 	c.Locals("user", parsedToken)
 	return c.Next()
 }

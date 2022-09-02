@@ -2,12 +2,16 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 
 	"github.com/gofiber/websocket/v2"
+	"github.com/jonreesman/chat/config"
 	"github.com/jonreesman/chat/database"
 	"github.com/jonreesman/chat/middleware"
 	"github.com/jonreesman/chat/model"
@@ -16,28 +20,57 @@ import (
 
 func ConnectToRoom(c *websocket.Conn) {
 	// When the function returns, unregister the client and close the connection
-	id := c.Query("user_id")
-	client, err := GetClientByID(id)
+
+	var (
+		tokenProvidedUserID string
+		tokenProvidedRoomID string
+		userToken           string
+	)
+
+	userProvidedUserID := c.Query("user_id")
+	userProvidedRoomID := c.Params("id")
+	roomToken, err := middleware.ParseToken(c.Query("room_token"))
+	if err != nil {
+		log.Printf("room handshake failed")
+		c.Close()
+		return
+	}
+	if claims, ok := roomToken.Claims.(jwt.MapClaims); ok && roomToken.Valid {
+		tokenProvidedUserID = claims["user_id"].(string)
+		tokenProvidedRoomID = claims["room_id"].(string)
+		userToken = claims["user_token"].(string)
+	} else {
+		log.Printf("room token invalid")
+		c.Close()
+		return
+	}
+	parsedUserToken, err := middleware.ParseToken(userToken)
+	if err != nil {
+		log.Printf("room handshake failed")
+		c.Close()
+		return
+	}
+	if userProvidedUserID != tokenProvidedUserID || userProvidedRoomID != tokenProvidedRoomID || !validToken(parsedUserToken, tokenProvidedUserID) {
+		log.Printf("room token does not match")
+		if ok, _ := strconv.ParseBool(config.GetConfig("DEBUG")); ok {
+			fmt.Println(userProvidedUserID, " ", tokenProvidedUserID)
+			fmt.Println(userProvidedRoomID, " ", tokenProvidedRoomID)
+		}
+		c.Close()
+		return
+	}
+	client, err := GetClientByID(userProvidedUserID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	token := c.Query("Authorization")
-	parsedToken, err := middleware.ParseToken(token)
-	if err != nil {
-		log.Printf("error parsing token: %v", err)
-		return
-	}
-	if !validToken(parsedToken, id) {
-		return
-	}
-	roomID := c.Params("id")
-	if _, ok := room.Rooms[roomID]; !ok {
+
+	if _, ok := room.Rooms[tokenProvidedRoomID]; !ok {
 		c.Close()
 		return
 	}
-	room := room.Rooms[roomID]
-	uuidRoomID, _ := uuid.Parse(roomID)
+	room := room.Rooms[tokenProvidedRoomID]
+	uuidRoomID, _ := uuid.Parse(tokenProvidedRoomID)
 
 	client.SetConnection(c)
 
@@ -49,7 +82,7 @@ func ConnectToRoom(c *websocket.Conn) {
 	// Register the client
 	room.Register(client)
 
-	messages := database.GetRoomMessages(roomID)
+	messages := database.GetRoomMessages(tokenProvidedRoomID)
 	for _, message := range messages {
 		message.User = *(room.ClientsByID[message.UserID])
 		m, err := json.Marshal(message)
@@ -76,7 +109,7 @@ func ConnectToRoom(c *websocket.Conn) {
 		}
 
 		if messageType == websocket.TextMessage {
-			r := database.FindRoom(roomID)
+			r := database.FindRoom(tokenProvidedRoomID)
 			content := &model.Message{
 				User:      *client,
 				UserID:    client.ID,

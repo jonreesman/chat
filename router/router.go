@@ -19,7 +19,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/login", handler.Login)
 
 	rooms := api.Group("/rooms")
-	rooms.Get("/", func(c *fiber.Ctx) error {
+	rooms.Get("/", middleware.Protected(), func(c *fiber.Ctx) error {
 		err := handler.GetRooms(c, room.Rooms)
 		if err != nil {
 			c.Status(500)
@@ -29,7 +29,17 @@ func SetupRoutes(app *fiber.App) {
 		return nil
 	})
 
-	rooms.Get("/:id", websocket.New(func(c *websocket.Conn) {
+	rooms.Get("/room", middleware.Protected(), handler.GetRoomToken)
+
+	rooms.Use("/room/:id", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+
+	rooms.Get("/room/:id", websocket.New(func(c *websocket.Conn) {
 		handler.ConnectToRoom(c)
 	}))
 
@@ -38,6 +48,7 @@ func SetupRoutes(app *fiber.App) {
 	rooms.Patch("/:id", middleware.Protected(), handler.UpdateRoom)
 
 	client := api.Group("/client")
+	client.Get("/", middleware.Protected(), handler.GetClient)
 	client.Get("/:id", middleware.Protected(), middleware.GetToken, handler.GetClient)
 	client.Post("/", handler.CreateClient)
 	client.Patch("/:id", middleware.Protected(), middleware.GetToken, handler.UpdateClient)

@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jonreesman/chat/config"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49,7 +50,6 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Error on username", "data": err})
 	}
-
 	if !CheckPasswordHash(password, user.Password) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Invalid password", "data": nil})
 	}
@@ -66,5 +66,54 @@ func Login(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    t,
+		Expires:  time.Now().Add(time.Hour * 72),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
 	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "token": t, "user": user})
+}
+
+// Returns a JWT for the specific session of a
+// user connecting to a given rooms websocket
+/*
+	POST Request Form: http://[ip]:[port]/api/rooms/room
+	Query Params (JSON): {
+		"user_id": [user ID],
+		"room_id": [room ID]
+	}
+	Response Form:
+		{
+			"status": [response status],
+			"message": [success/error],
+			"token": [JWT],
+		}
+*/
+func GetRoomToken(c *fiber.Ctx) error {
+	token := c.Locals("user").(*jwt.Token)
+	fmt.Println(token)
+	userID := c.Query("user_id")
+	roomID := c.Query("room_id")
+	if !validToken(token, userID) {
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Invalid token id", "data": nil})
+	}
+
+	userToken, err := token.SignedString([]byte(config.GetConfig("SECRET")))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	roomToken := jwt.New(jwt.SigningMethodHS256)
+	claims := roomToken.Claims.(jwt.MapClaims)
+	claims["user_id"] = userID
+	claims["room_id"] = roomID
+	claims["user_token"] = userToken
+	claims["exp"] = time.Now().Add(time.Second * 5).Unix()
+
+	t, err := roomToken.SignedString([]byte(config.GetConfig("SECRET")))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	return c.JSON(fiber.Map{"status": "success", "message": "Room auth established", "room_token": t})
 }

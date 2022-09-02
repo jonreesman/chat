@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/jonreesman/chat/database"
 	"github.com/jonreesman/chat/model"
@@ -26,7 +27,14 @@ import (
 		}
 */
 func GetClient(c *fiber.Ctx) error {
-	id := c.Params("id")
+	var id string
+	token := c.Locals("user").(*jwt.Token)
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id = claims["user_id"].(string)
+	} else {
+		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "internal error", "data": nil})
+	}
+	//id := c.Params("id")
 	db := database.DB
 	var user model.Client
 	db.Find(&user, "id = ?", id)
@@ -227,7 +235,6 @@ func hashPassword(password string) (string, error) {
 func validToken(t *jwt.Token, id string) bool {
 	claims := t.Claims.(jwt.MapClaims)
 	uid := claims["user_id"]
-
 	if uid != id {
 		return false
 	}
