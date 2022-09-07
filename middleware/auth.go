@@ -52,6 +52,9 @@ func ParseToken(token string) (*jwt.Token, error) {
 		}
 		return []byte(config.GetConfig("SECRET")), nil
 	})
+	if err != nil {
+		return nil, err
+	}
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 		fmt.Println(claims["user_id"])
 		return parsedToken, nil
