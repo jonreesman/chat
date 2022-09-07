@@ -3,7 +3,9 @@ package handler
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -40,17 +42,18 @@ func UploadAvatar(c *fiber.Ctx) error {
 		log.Printf("Avatar save error: %v", err)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "failed to upload avatar"})
 	}
-	splitFileName := strings.Split(file.Filename, ".")
-	fileEnding := splitFileName[len(splitFileName)-1]
-	if err := c.SaveFile(file, fmt.Sprintf("./uploads/avatars/%s.%s", id, fileEnding)); err != nil {
-		log.Printf("Avatar save error: %v", err)
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "failed to upload avatar"})
-	}
 	user, err := GetClientByID(id)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "invalid client"})
 	}
-	user.AvatarURL = user.ID.String() + "." + fileEnding
+	splitFileName := strings.Split(file.Filename, ".")
+	fileEnding := splitFileName[len(splitFileName)-1]
+	newFileName := user.ID.String() + "-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + fileEnding
+	if err := c.SaveFile(file, fmt.Sprintf("./uploads/avatars/%s", newFileName)); err != nil {
+		log.Printf("Avatar save error: %v", err)
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "failed to upload avatar"})
+	}
+	user.AvatarURL = newFileName
 	database.UpdateAvatar(user)
 
 	type updatedUser struct {
