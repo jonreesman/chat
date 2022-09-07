@@ -41,7 +41,13 @@ func GetClient(c *fiber.Ctx) error {
 	if user.Username == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No user found with ID", "data": nil})
 	}
-	return c.JSON(fiber.Map{"status": "success", "message": "Product found", "data": user})
+	userPayload := &model.Client{
+		Username:    user.Username,
+		DisplayName: user.DisplayName,
+		ID:          user.ID,
+		AvatarURL:   user.AvatarURL,
+	}
+	return c.JSON(fiber.Map{"status": "success", "message": "Product found", "data": userPayload})
 }
 
 // Recieves a new username and password, creates the
