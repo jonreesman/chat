@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/jonreesman/chat/config"
 	_ "github.com/jonreesman/chat/config"
 	"github.com/jonreesman/chat/database"
 	"github.com/jonreesman/chat/room"
@@ -26,8 +27,7 @@ func main() {
 	}))
 
 	router.SetupRoutes(app)
-
-	addr := flag.String("addr", ":8080", "http service address")
+	addr := config.GetConfig("HOST")
 	flag.Parse()
-	log.Fatal(app.Listen(*addr))
+	log.Fatal(app.Listen(addr))
 }

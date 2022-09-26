@@ -15,6 +15,9 @@ var envs = []string{
 	"DB_USER",
 	"DB_PASSWORD",
 	"DB_NAME",
+	"DEBUG",
+	"SECRET",
+	"HOST",
 }
 
 func init() {
