@@ -25,4 +25,9 @@ It has an accompanying Next.js based frontend located [here.](https://github.com
 - All user passwords are stored in the DB as a hash.
 - The `.env.sample` and included `docker-compose.yml` will work together out of the box. You will want to set your own `SECRET` variable though!
 
-
+## The way forward
+1. User permissions
+    - Banning/booting other users
+    - Rooms creation/deletion
+2. Sending files/images via chat
+3. E2E encryption using Go WASM on the frontend.
