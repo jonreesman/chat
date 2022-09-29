@@ -23,6 +23,7 @@ func main() {
 	app.Static("/avatars", "./uploads/avatars")
 
 	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.GetConfig("ORIGIN"),
 		AllowCredentials: true,
 	}))
 

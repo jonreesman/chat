@@ -18,6 +18,7 @@ var envs = []string{
 	"DEBUG",
 	"SECRET",
 	"HOST",
+	"ORIGIN",
 }
 
 func init() {
