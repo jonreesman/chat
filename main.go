@@ -19,13 +19,13 @@ func main() {
 
 	room.RoomSetup()
 
-	app.Static("/", "./home.html")
-	app.Static("/avatars", "./uploads/avatars")
-
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     config.GetConfig("ORIGIN"),
 		AllowCredentials: true,
 	}))
+
+	app.Static("/", "./home.html")
+	app.Static("/avatars", "./uploads/avatars")
 
 	router.SetupRoutes(app)
 	addr := config.GetConfig("HOST")
