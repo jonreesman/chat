@@ -17,6 +17,7 @@ func SetupRoutes(app *fiber.App) {
 
 	auth := api.Group("auth")
 	auth.Post("/login", handler.Login)
+	auth.Get("/logout", middleware.Protected(), handler.Logout)
 
 	rooms := api.Group("/rooms")
 	rooms.Get("/", middleware.Protected(), func(c *fiber.Ctx) error {
