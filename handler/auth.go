@@ -33,6 +33,25 @@ func CheckPasswordHash(password, hash string) bool {
 		}
 */
 
+func Logout(c *fiber.Ctx) error {
+	token := c.Locals("user").(*jwt.Token)
+	if !token.Valid {
+		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "internal error", "data": nil})
+	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    "expired",
+		Expires:  time.Now().Add(time.Second * 3),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	//TODO Add repository for inactive JWTS.
+	//TODO Add check for successful cookie removal.
+	return c.JSON(fiber.Map{"status": "success", "message": "Success logout"})
+
+}
+
 func Login(c *fiber.Ctx) error {
 	type LoginInput struct {
 		Identity string
@@ -51,6 +70,8 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Error on username", "data": err})
 	}
 	if !CheckPasswordHash(password, user.Password) {
+		fmt.Println(user)
+		fmt.Printf("Ruh roh %s - %s\n", password, user.Password)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Invalid password", "data": nil})
 	}
 
