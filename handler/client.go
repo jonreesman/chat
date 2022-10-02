@@ -78,7 +78,19 @@ func CreateClient(c *fiber.Ctx) error {
 	if err := c.BodyParser(client); err != nil {
 		fmt.Println(client)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "data": err})
-
+	}
+	check, err := getClientByUsername(client.Username)
+	if err != nil {
+		return err
+	}
+	if check.Username != "" {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "Invalid username. Username already exists."})
+	}
+	if client.Username == "" {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "Invalid username"})
+	}
+	if !isValidPassword(client.Password) {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "Invalid password"})
 	}
 	client.ID = uuid.New()
 	client.DisplayName = client.Username
@@ -256,6 +268,16 @@ func validClient(id string, p string) bool {
 		return false
 	}
 	if !CheckPasswordHash(p, user.Password) {
+		return false
+	}
+	return true
+}
+
+func isValidPassword(password string) bool {
+	if password == "" {
+		return false
+	}
+	if len(password) < 5 {
 		return false
 	}
 	return true
