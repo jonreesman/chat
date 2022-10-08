@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -21,10 +22,17 @@ func main() {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     config.GetConfig("ORIGIN"),
+		AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin",
 		AllowCredentials: true,
 	}))
 
 	app.Static("/", "./home.html")
+	if _, err := os.Stat("./uploads/avatars"); os.IsNotExist(err) {
+		err := os.MkdirAll("./uploads/avatars", os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 	app.Static("/avatars", "./uploads/avatars")
 
 	router.SetupRoutes(app)

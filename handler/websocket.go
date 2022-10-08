@@ -20,7 +20,6 @@ import (
 
 func ConnectToRoom(c *websocket.Conn) {
 	// When the function returns, unregister the client and close the connection
-
 	var (
 		tokenProvidedUserID string
 		tokenProvidedRoomID string
@@ -84,7 +83,16 @@ func ConnectToRoom(c *websocket.Conn) {
 
 	messages := database.GetRoomMessages(tokenProvidedRoomID)
 	for _, message := range messages {
-		message.User = *(room.ClientsByID[message.UserID])
+		if check, ok := room.ClientsByID[message.UserID]; !ok {
+			userInDB, err := getClientByID(message.UserID)
+			if err != nil {
+				log.Printf("non-existant user detected, ignoring message.")
+				continue
+			}
+			message.User = *userInDB
+		} else {
+			message.User = *check
+		}
 		m, err := json.Marshal(message)
 		if err != nil {
 			log.Printf("error marshalling room history")

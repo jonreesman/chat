@@ -282,3 +282,13 @@ func isValidPassword(password string) bool {
 	}
 	return true
 }
+
+func getClientByID(id uuid.UUID) (*model.Client, error) {
+	db := database.DB
+	var user model.Client
+	db.Find(&user, "id = ?", id)
+	if user.Username == "" {
+		return nil, errors.New("client does not exist.")
+	}
+	return &user, nil
+}
