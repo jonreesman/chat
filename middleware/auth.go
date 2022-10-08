@@ -62,3 +62,12 @@ func ParseToken(token string) (*jwt.Token, error) {
 		return nil, err
 	}
 }
+
+func DemoAuth(c *fiber.Ctx) error {
+	demoToken := c.Query("demoToken")
+	if demoToken != config.GetConfig("demoToken") {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"status": "error", "message": "Missing or malformed demo token", "data": nil})
+	}
+	return c.Next()
+}

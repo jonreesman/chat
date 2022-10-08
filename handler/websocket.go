@@ -83,6 +83,7 @@ func ConnectToRoom(c *websocket.Conn) {
 
 	messages := database.GetRoomMessages(tokenProvidedRoomID)
 	for _, message := range messages {
+		log.Println(message)
 		if check, ok := room.ClientsByID[message.UserID]; !ok {
 			userInDB, err := getClientByID(message.UserID)
 			if err != nil {
